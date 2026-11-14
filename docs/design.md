@@ -44,6 +44,7 @@ Each source is a **collector** that outputs a sorted, normalised list. That list
 | flatpak | `flatpak list --app --columns=application,origin` + remotes | `community.general.flatpak` |
 | snap | `snap list` (non-base) | `community.general.snap` |
 | uv-tools / pipx | `uv tool list`, `pipx list --json` | `command` with `creates:` |
+| conda | `conda env list` + `conda env export --from-history` | `conda env create -f` |
 | npm-global, cargo | `npm ls -g --json`, `~/.cargo/.crates2.json` | `npm` / `command` |
 | repos | every git checkout under configured roots: path + remote URL + branch | `ansible.builtin.git` (clone only, never content) |
 | services | enabled systemd units, system and `--user`, that differ from distro defaults | `systemd_service` |

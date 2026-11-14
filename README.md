@@ -77,6 +77,10 @@ Footprint is a thin layer that adds the capture, registry, 3-2-1 and restore log
 
 Restic was considered for data transfer and rejected as the default. Its snapshot model is the opposite of a single rolling copy, and the snapshot history and pruning add overhead we don't want. It could be added later as an alternative backend.
 
+## Recipes and the profiler
+
+Each OS family gets a **formula**: the layers a machine of that family has. The first is [Ubuntu](docs/recipe-ubuntu.md) (workstation, laptop, home server). No fixed template decides what to include, because machines differ too much. Instead a companion Claude Code plugin, the [profiler](docs/profiler.md), runs once per machine with its owner, separates intent from noise and writes the machine's include/ignore lists. From then on the `footprint` CLI is fully deterministic. Restore never needs an AI.
+
 See [docs/design.md](docs/design.md) for the registry format, what gets captured, how removals work, the secrets model, hardware independence and the restore path.
 
 ## Intended commands (draft)
