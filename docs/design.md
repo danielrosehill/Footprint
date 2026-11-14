@@ -122,3 +122,16 @@ footprint restore --machine laptop --from wasabi
 - Should `capture` run on a timer (systemd user timer), or only by hand followed by `push`?
 - How to handle apps whose state lives in a local database (browsers, password managers). Out of scope as "cloud-synced already", or optional sidecar entries?
 - Interaction with Enroll for the first capture: import its output, or write our own first-run collectors only?
+
+## 13. Lineage: earlier experiments folded in (2026-11-14)
+
+Two earlier repos tried versions of this idea. Both were deleted on 2026-11-14 once their useful parts were folded into Footprint.
+
+**Ubuntu-Ansible-0425 (private, April 2025).** One-way desktop → laptop sync with Ansible: `capture-state`, `push-changes`, `apply-changes` playbooks. Its roles were never written. Kept: its scope list (apt, PPAs/sources, npm globals, Python packages, conda environments, dotfiles), now recipe-ubuntu.md layers 2, 3, 5 and 9.
+
+**Claude-OS-Playbook (public template, March 2026).** Claude Code `/setup`, `/verify` and `/export` commands with eight subagents (system-packages, languages, cli-tools, containers, shell-config, claude-setup, desktop-apps, services) provisioning from a hand-written `profiles/*.yaml`.
+
+- Kept: its category split (it matches the recipe layers); runtime managers (nvm, rustup, Go, SDKMAN); AI/agent tooling as a layer; marker-delimited managed blocks in dotfiles (`# --- <tool> START: <section> ---` … `END`) so edits are idempotent and never overwrite a user's file; "check what is present before installing, report what changed".
+- Rejected, and why: **agent-driven provisioning**. Having an LLM interpret the profile on every run makes restore non-deterministic and dependent on an AI service being reachable and behaving the same way twice. That is the opposite of what a disaster-recovery path needs. Footprint keeps the agent only for one-time profiling (profiler.md); restore is plain Ansible.
+- Rejected: **hand-written profiles as the source of truth**. They drift from the real machine the day after they're written. Footprint's playbook is captured from the machine, not authored.
+- Different use, not covered: provisioning a *new* machine to a chosen template (as opposed to rebuilding a lost one). Partly reachable by restoring only `common/` onto a new machine; not a goal.

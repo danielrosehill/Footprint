@@ -31,11 +31,12 @@ Each layer is a collector (live state → sorted list) plus an Ansible role (lis
 | 2 | Package sources | `/etc/apt/sources.list.d/*`, `/etc/apt/keyrings`, `/usr/share/keyrings` (non-distro), PPAs | `deb822_repository`, `get_url` for keys | Record key **URLs** where known, so keys are fetched fresh rather than copied stale. |
 | 3 | System packages | `apt-mark showmanual` minus the release's seed manifest, minus the ignore list | `apt` | Also `.deb` files installed from URLs (source URL recorded by profiler). |
 | 4 | Sandboxed apps | `flatpak list --app` + remotes; `snap list` (non-base, with channel/confinement) | `community.general.flatpak`, `snap` | |
-| 5 | Language toolchains | `uv tool list`, `uv python list --only-installed`, `pipx list --json`, `pip list --user`, `conda env list` + `conda env export --from-history` per env, `npm ls -g`, `~/.cargo/.crates2.json`, `go` binaries, nvm/SDKMAN versions | `command` with `creates:`, conda `env create -f` | Conda envs are stored as `environment.yml` files in the footprint repo. |
+| 5 | Language toolchains | runtime managers and their versions (uv Python, nvm/Node, rustup, Go tarball, SDKMAN/Java), `uv tool list`, `pipx list --json`, `pip list --user`, `conda env list` + `conda env export --from-history` per env, `npm ls -g`, `~/.cargo/.crates2.json`, `go` binaries, nvm/SDKMAN versions | `command` with `creates:`, conda `env create -f` | Conda envs are stored as `environment.yml` files in the footprint repo. |
 | 6 | Loose binaries | AppImages, `~/.local/bin`, `/usr/local/bin`, `/opt/*` | `get_url` from a recorded source URL | The profiler asks where each came from. Unknown origin goes to the sidecar. |
 | 7 | Repositories | git checkouts under configured roots: path, remote, branch | `git` clone | Never content. Unpushed or remote-less repos are flagged in `drift`. |
 | 8 | System config | conffiles changed from package default (`dpkg --verify`), plus an include list under `/etc` | `copy` | e.g. sudoers drop-ins, sysctl, udev rules, NetworkManager *non-secret* settings |
-| 9 | User config | dotfiles on an include list | `copy` / `template` | If a dotfile manager (yadm, chezmoi, stow) is already in use, Footprint records "clone dotfiles repo X with tool Y" instead of copying files. |
+| 9 | User config | dotfiles on an include list | `copy` / `template`, `blockinfile` for managed blocks | If a dotfile manager (yadm, chezmoi, stow) is already in use, Footprint records "clone dotfiles repo X with tool Y" instead of copying files. |
+| 9a | AI / agent tooling | Claude Code (and similar) user config: `~/.claude` settings, commands, agents, MCP server config, plugin marketplaces | `copy`, CLI install step | Tokens inside MCP config go to secrets, not config. |
 | 10 | Desktop settings | KDE rc files on an include list, or `dconf dump /` for GNOME | `copy` / `dconf load` | Workstation and laptop only. |
 | 11 | Services and schedules | enabled units and timers that differ from distro defaults, user crontab, user units in `~/.config/systemd/user` | `systemd_service`, `copy`, `cron` | |
 | 12 | Containers | compose files and the repos they live in, named images | treated as repositories (layer 7) plus `docker compose up` | **Volumes are data, not footprint.** See the home server variant. |
@@ -60,6 +61,8 @@ The layers are the same across all three. The variants differ in emphasis.
 | OPNsense | Not Ansible-rebuilt. The whole config is one `config.xml`, so the formula is "export `config.xml` to the targets on change" plus a plugin list. |
 | Synology DSM | Config export (`.dss`) plus a package list. User data on the NAS is the backup target, not something Footprint captures. |
 
-## What the old experiment scoped (folded in here)
+## What the old experiments scoped (folded in here)
 
 The 2025 Ubuntu Ansible experiment scoped: Debian packages, third-party sources and PPAs, global npm packages, Python packages, conda environments and dotfiles. All six are covered above: layers 2, 3, 5 (npm, Python, conda) and 9. That repo was a skeleton (playbooks referencing roles that were never written) and has been retired in favour of this one.
+
+The 2026 Claude-OS-Playbook experiment (Claude Code subagents provisioning from a hand-written profile YAML) added: runtime managers (nvm, rustup, Go, SDKMAN) to layer 5, AI/agent tooling as layer 9a, and marker-delimited managed blocks for editing shell dotfiles without overwriting them (layer 9). See design.md §13 for what was rejected from it.
